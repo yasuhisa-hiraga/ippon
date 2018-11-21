@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>IPPON</title>
+  <link rel="stylesheet" type="text/css" href="css/basic.css">
+  <link rel="stylesheet" type="text/css" href="css/oogiri.css">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <script type="text/javascript" src="js/jquery-1.11.2.js"></script>
+  <script type="text/javascript" src="js/connection.js"></script>
+  <script type="text/javascript" src="js/dragDrop.js"></script>
+
+</head>
+<body>
+<div id="pdfViewer" hidden>ここにPDFを表示</div>
+
+<div id="answerPanel" hidden>
+	<div id="answerer">くろの回答</div>
+	<div id="answerWord" class="flexiblebox">ヒッポロ系ニャポーン</div>
+	<div id="closeBtn" onclick="closeAnswer()">閉じる</div>
+</div>
+
+<div id="plzPdf" class="flexiblebox">
+	ここに出題PDFをドロップしてください。
+</div>
+
+<div id="menuBtns" hidden>
+	<div class="menuBtn" onclick="gotoPrevPage()">戻る</div>
+	<div class="menuBtn" onclick="gotoNextPage()">次へ</div>
+	<div class="menuBtn" onclick="closeQuestion()">終了</div>
+</div>
+
+<div id="evaluateBox" >
+	<!-- <div class="evaluate ev1" >ウケる</div> -->
+</div>
+
+
+<!-- 音ファイル -->
+ <!-- クイズ -->
+<audio id="q_jan" preload="auto">
+	<source src="se/q_jan.mp3" type="audio/mp3">
+</audio>
+<audio id="q_answer" preload="auto">
+	<source src="se/q_answer.mp3" type="audio/mp3">
+</audio>
+
+ <!-- 評価 -->
+<audio id="e_good" preload="auto">
+	<source src="se/e_good.mp3" type="audio/mp3">
+</audio>
+<audio id="e_better" preload="auto">
+	<source src="se/e_better.mp3" type="audio/mp3">
+</audio>
+<audio id="e_crazy" preload="auto">
+	<source src="se/e_crazy.mp3" type="audio/mp3">
+</audio>
+<audio id="e_bad" preload="auto">
+	<source src="se/e_bad.mp3" type="audio/mp3">
+</audio>
+<script>
+var PDF = 'example.pdf';
+$(function(){
+	//表示
+	//showPdf( 'example.pdf' , 1 );
+
+	//回答受付開始
+	pollingAnswer();
+
+	//評価受付開始
+	pollingEvaluate();
+
+});
+
+/////////////////////////////////////////////////////////////
+// ファイル名とページ番号を指定して表示
+/////////////////////////////////////////////////////////////
+// デフォルトinframe //
+var def_inframe = '<iframe src="pdf/example.pdf#page=1&view=Fit&viewrect=0,0,0,0&pagemode=none&scrollbar=0&toolbar=0&statusbar=0&navpanes=0" width="100%" height="820px" scrolling="no" marginwidth="0" marginheight="0" frameborder="0" style="border:none;"></iframe>';
+function showPdf( fileName , page  ){
+	$('#pdfViewer').show();
+	$('#menuBtns').show();
+	var inframe = def_inframe.replace( 'example.pdf' , fileName ).replace( 'page=1' , 'page='+page );
+	$('#pdfViewer').empty();
+	$('#pdfViewer').append( inframe );
+}
+
+/////////////////////////////////////////////////////////////
+// 初期化
+/////////////////////////////////////////////////////////////
+function initPdf( PDF ){
+	currentPage = 1;
+	showPdf( PDF , currentPage );
+}
+
+/////////////////////////////////////////////////////////////
+// ページ移動
+/////////////////////////////////////////////////////////////
+var currentPage = 1;
+function gotoNextPage () {
+	currentPage++;
+	showPdf( PDF , currentPage );
+	playSe( 'q_jan' );//じゃんっ
+	//現在のページを送信
+	sendCurrentPage( currentPage );
+}
+function gotoPrevPage(){
+	if(currentPage>1)currentPage--;
+	showPdf( PDF , currentPage );
+	//現在のページ送信
+	sendCurrentPage( currentPage );
+}
+function sendCurrentPage( currentPage ){
+	var fd = new FormData();
+	fd.append('currentPage',currentPage);
+	postData('/sendPageNumber', fd , function(res){});
+}
+
+/////////////////////////////////////////////////////////////
+// 回答を閉じる
+/////////////////////////////////////////////////////////////
+function closeAnswer(){
+	if(ansHideTimer)clearTimeout(ansHideTimer);
+	$('#answerPanel').hide();
+}
+/////////////////////////////////////////////////////////////
+// 出題を閉じる
+/////////////////////////////////////////////////////////////
+function closeQuestion(){
+	$('#pdfViewer').hide();
+	$('#menuBtns').hide();
+	$('#plzPdf').show();
+}
+
+/////////////////////////////////////////////////////////////
+// 定期的に回答確認
+/////////////////////////////////////////////////////////////
+var ansHideTimer = null;
+function pollingAnswer(){
+	getData( '/getAnswer' , function( res ){
+		//回答があれば表示
+		if(res.status==200){
+			var answerer = res.data.answerer;
+			var text     = res.data.text;
+			var color    = res.data.color;
+			$('#answerer').text( answerer + ' の回答');
+			$('#answerWord').html( text );
+			$('#answerWord').css( 'color', color);
+			$('#answerPanel').show();
+			playSe( 'q_answer' );
+			if(ansHideTimer)clearTimeout(ansHideTimer);
+			//10秒後に自動的に閉じる
+			ansHideTimer = setTimeout(function(){
+				closeAnswer();
+			},10*1000);
+		}
+	});
+	setTimeout(function(){
+		pollingAnswer();
+	},100);
+}
+
+
+/////////////////////////////////////////////////////////////
+// 定期的に評価を確認
+/////////////////////////////////////////////////////////////
+function pollingEvaluate(){
+	getData( '/getEvaluate' , function( res ){
+		//評価があれば表示
+		if(res.status==200){
+			var ev = res.data;
+			showEvaluate( ev );
+		}
+	});
+	setTimeout(function(){
+		pollingEvaluate();
+	},200);
+}
+
+/////////////////////////////////////////////////////////////
+// 受け取った評価を表示
+/////////////////////////////////////////////////////////////
+function showEvaluate( ev ){
+	var str='';
+	switch(ev){
+		case 'good':
+			str = 'ウケる!';
+			break;
+		case 'bad':
+			str = 'これはひどい!';
+			break;
+		case 'crazy':
+			str = 'イカれてるぜ!';
+			break;
+		case 'better':
+			str = 'お上手!';
+			break;
+	}
+
+	var r_left   = Math.floor( Math.random()*90 );
+	var r_bottom = Math.floor( Math.random()*100 ) + 40;
+	var evTag = $('<div>').addClass('evaluate').css('left', r_left + '%').css('bottom', r_bottom + 'px').text( str );
+	$('#evaluateBox').append(evTag);
+	//音を鳴らす
+	playSe('e_'+ev);
+	setTimeout(function(){
+		evTag.remove();
+	},2000);
+}
+
+/////////////////////////////////////////////////////////////
+// 音の再生
+/////////////////////////////////////////////////////////////
+function playSe( id ){
+	var se = $('#'+id);
+	se[0].currentTime = 0;
+	se[0].play();
+}
+
+</script>
+
+</body>
+</html>

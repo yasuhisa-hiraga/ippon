@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>大喜利ツール:回答者</title>
+  <link rel="stylesheet" type="text/css" href="css/basic.css">
+  <link rel="stylesheet" type="text/css" href="css/oogiri_answerer.css">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <script type="text/javascript" src="js/jquery-1.11.2.js"></script>
+  <script type="text/javascript" src="js/connection.js"></script>
+
+</head>
+<body>
+
+
+<div id="answerBox">
+	<!--
+	<p>回答者名</p>
+	<input type="text" name="answerer"/>
+	-->
+	<p id="answerer">回答者名</p>
+	<p>回答テキスト</p>
+	<textarea name="answer"></textarea>
+	<div class="clearfix">
+		<div id="black" class="colors" onclick="changeColor('black')"></div>
+		<div id="red"   class="colors" onclick="changeColor('red')"></div>
+		<div id="blue"  class="colors" onclick="changeColor('blue')"></div>
+		<div id="orange"class="colors" onclick="changeColor('orange')"></div>
+		<div id="green" class="colors" onclick="changeColor('green')"></div>
+		<div id="gray"  class="colors" onclick="changeColor('gray')"></div>
+	</div>
+	<div id="sendBtn"  class="basicBtn btn_yellow" onclick="sendText()">投稿する</div>
+	<div id="clearBtn" class="basicBtn btn_yellow" onclick="clearText()">内容をクリア</div>
+
+	<p>評価</p>
+	<div class="clearfix" >
+		<div id="good"   class="basicBtn" onclick="sendEvaluate('good')">ウケる</div>
+		<div id="better" class="basicBtn" onclick="sendEvaluate('better')">お上手！</div>
+		<div id="bad"    class="basicBtn" onclick="sendEvaluate('bad')">これはひどい</div>
+		<div id="crazy"  class="basicBtn" onclick="sendEvaluate('crazy')">イカれてるぜ</div>
+	</div>
+</div>
+
+<!-- popup -->
+<div id="popup" class="blackBack" hidden>
+	<div class="popupWindow">
+		<p>回答者名</p>
+		<input type="text" name="answerer"/><br/><br/>
+		<div class="basicBtn" onclick="closePopup()">決定</div>
+	</div>
+</div>
+
+<!-- loading -->
+<div id="loading" class="blackBack" hidden>
+	<div class="loadingMessage flexiblebox">送信中..</div>
+</div>
+
+<script>
+var SET_COLOR ='black';
+var SET_SIZE  ='100';
+var SET_WEIGHT='bold';
+$(function(){
+	//色デフォルト:くろ
+	changeColor( 'black' );
+	//回答者名入力欄表示
+	$('#popup').show();
+});
+
+//================================================
+// 回答者名入力欄を閉じる
+//================================================
+function closePopup(){
+	var answerer = $('input[name="answerer"]').val();
+	$('#answerer').text( '回答者:' + answerer );
+	$('#popup').hide();
+}
+
+
+//================================================
+// 入力内容のクリア
+//================================================
+function clearText(){
+	$('textarea[name="answer"]').val('');
+}
+
+//================================================
+// 入力内容送信
+//================================================
+function sendText(){
+	$('#loading').show();
+
+	// 回答
+	var text = $('textarea[name="answer"]').val();
+	console.log( text );
+	//clearText();
+	// 回答者
+	var answerer = $('input[name="answerer"]').val();
+	// 色
+	var color    = SET_COLOR;
+
+	//todo
+	//色、回答者名を送信
+	var fd = new FormData();
+	fd.append( 'answerer' , answerer );
+	fd.append( 'text' , text );
+	fd.append( 'color' , color );
+	postData('/sendAnswer', fd ,function(res){
+		$('#loading').hide();
+		if(res.status==200){
+			console.log('回答成功');
+		}else{
+			alert('回答失敗');
+		}
+	});
+}
+
+//================================================
+// 色変更
+//================================================
+function changeColor( color ){
+	SET_COLOR = color;
+	var colors = [
+	'black','red','blue','orange','green','gray'
+	];
+	for(var i=0;i<colors.length;i++){
+		$('#'+colors[i]).removeClass('selected');
+	}
+	$('#'+color).addClass('selected');
+	$('textarea').css('color',color);
+}
+
+//================================================
+// 評価
+//================================================
+function sendEvaluate( ev ){
+	console.log(ev);
+	//todo 評価内容を送信
+	var fd = new FormData();
+	fd.append('evaluate',ev);
+	postData('/sendEvaluate',fd,function(res){
+		if(res.status!=200){
+			alert('評価失敗');
+		}
+	});
+}
+
+</script>
+
+</body>
+</html>

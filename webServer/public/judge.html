@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>IPPON:ボタン</title>
+  <link rel="stylesheet" type="text/css" href="css/reset.css">
+  <link rel="stylesheet" type="text/css" href="css/basic.css">
+  <link rel="stylesheet" type="text/css" href="css/ippon-judge.css">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <script type="text/javascript" src="js/jquery-1.11.2.js"></script>
+  <script type="text/javascript" src="js/connection.js"></script>
+
+</head>
+<body>
+
+	<div id="wrapper">
+		<ul id="btns">
+			<li id="one" >IPPON</li>
+			<li id="two" >IPPON</li>
+		</ul>
+	</div>
+
+<script>
+
+$(function(){
+	//ボタン位置調整
+	var w = window.innerWidth;
+	var p = ( w / 2 - 250 / 2 )+ "px";
+	$('#btns').css("padding-left",p);
+});
+
+var enable_one = true;
+var enable_two = true;
+
+
+$('#one').click(function () {
+	if( !enable_one )return;
+	enable_one = false;
+
+	// 送信処理
+	// todo
+
+	countup(() => {
+		$(this).css("color","gray");
+	});
+	
+});
+$('#two').click(function () {
+	if( !enable_two )return;
+	enable_two = false;
+
+	countup(() => {
+		$(this).css("color","gray");
+	});
+
+	
+	$(this).css("color","gray");
+});
+
+
+//================================================
+// カウントチェック
+//================================================
+var ansHideTimer = null;
+function pollingCount(){
+	getData( '/getCount' , function( res ){
+		//回答があれば表示
+		if(res.status==200){
+			var count = res.data;
+			//console.log("count",count);
+			if(count==0){
+				enable_one = true;
+				enable_two = true;
+				$('#one').css("color","white");
+				$('#two').css("color","white");
+			}
+		}
+	});
+	setTimeout(function(){
+		pollingCount();
+	},1000);
+}
+pollingCount();
+
+//================================================
+// カウントアップ
+//================================================
+function countup( callback ){
+	postData('/countup', null ,function(res){
+		if(res.status!=200){
+			//alert('評価失敗');
+		}
+		callback();
+	});
+}
+
+
+
+
+
+</script>
+
+
+</body>
+</html>
+

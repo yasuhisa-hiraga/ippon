@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>大喜利ツール</title>
+  <link rel="stylesheet" type="text/css" href="css/reset.css">
+  <link rel="stylesheet" type="text/css" href="css/basic.css">
+  <link rel="stylesheet" type="text/css" href="css/ippon-top.css">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <script type="text/javascript" src="js/jquery-1.11.2.js"></script>
+  <script type="text/javascript" src="js/connection.js"></script>
+
+</head>
+<body class="mainBg">
+  <div id="wrapper">
+    <div id="logo"><img src="img/ippon_logo.png"/></div>
+    <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+  	<ul>
+  		<li><div class="basicBtn white" onclick="jump('viewer.html')">Viewer(PC)</div></li>
+  		<li><div class="basicBtn red" onclick="jump('judge.html')">審査員(スマホ)</div></li>
+  	</ul>
+  </div>
+  <div id="copy">created by kuro</div>
+
+
+  <script>
+  function jump ( link ) {
+    location.href = link;
+  }
+  </script>
+</body>
+</html>

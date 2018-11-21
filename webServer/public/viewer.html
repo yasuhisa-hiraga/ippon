@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>IPPON</title>
+  <link rel="stylesheet" type="text/css" href="css/reset.css">
+  <link rel="stylesheet" type="text/css" href="css/basic.css">
+  <link rel="stylesheet" type="text/css" href="css/ippon.css">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <script type="text/javascript" src="js/jquery-1.11.2.js"></script>
+  <script type="text/javascript" src="js/connection.js"></script>
+  <script type="text/javascript" src="js/dragDrop.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/animejs/2.2.0/anime.min.js"></script>
+</head>
+<body class="mainBg">
+
+	<div id="wrapper">
+		<div id="ipponArea"></div>
+		<button id="reset">IPPON開始！</button>
+	</div>
+
+<!-- 音ファイル -->
+<audio id="pon" preload="auto" >
+	<source src="se/pon.mp3" type="audio/mp3">
+</audio>
+
+<audio id="iyopon" preload="auto" >
+	<source src="se/iyopon.mp3" type="audio/mp3">
+</audio>
+
+<script>
+var maxIppon = 10;
+
+
+
+// 定期的にipponCountを取りに行って、増えていたら増えていた分描画
+var timer = null;
+function pollingCount(){
+	getData( '/getCount' , function( res ){
+		//回答があれば表示
+		if(res.status==200){
+			var count = res.data;	
+			setIppon( count );
+		}
+	});
+	timer = setTimeout(function(){
+		pollingCount();
+	},100);
+}
+//pollingCount();
+
+
+// 10までいったら SE鳴らして IPPONアニメ
+
+//================================================
+// リセット
+//================================================
+$('#reset').click(function(){
+	playSe( "pon" );
+	reset();
+
+	// todo, 1回しかアニメーションしない・・・なんでや。jqueryと絡み？
+	// あと、cssのhoverが機能しなくなる
+	/*
+	anime({
+	  targets: '#reset',
+	  rotate: '1turn',
+	  direction: 'alternate',
+	  loop: false,
+	  complete: function(anim) {
+	    console.log("end");
+	  }
+	});
+*/
+});
+
+function reset(){
+	currentIppon = 0;
+	if(timer)clearTimeout(timer);
+	postData('/reset', null ,function(res){
+		if(res.status!=200){
+			//alert('評価失敗');
+		}
+		resetView();
+		pollingCount();
+	});
+}
+
+function resetView(){
+	removeAllIppon();
+	setTimeout(function(){
+		$('#ipponArea').empty();
+	},1000);
+}
+
+//================================================
+// ipponのセット
+//================================================
+var currentIppon = 0;
+function setIppon( count ){
+	var temp = count - currentIppon;
+
+	for(var i =0;i<temp;i++){
+		currentIppon++;
+		appendIppon( currentIppon );
+	}
+
+	//currentIppon = count;
+
+	if( currentIppon >= maxIppon ){
+		showIppon();
+	}
+}
+
+
+//================================================
+// ippon の追加描画
+//================================================
+function appendIppon( currentIppon ){
+	var colors     = ["red","white"];
+	var circleSize = ( 100+Math.floor( Math.random() * 100 )) + "px";
+	var ippon      = $('<div>').css("width", circleSize ).css("height", circleSize );
+	ippon.addClass("circle").addClass("el");
+	ippon.addClass( colors[currentIppon%2] );
+
+	// 画面サイズ
+	var w = window.innerWidth;
+	var h = window.innerHeight;
+
+	//
+	var w_range = w - 150;
+	var h_range = h - 150;
+
+	// 配置場所
+	var top   = ( 50+Math.floor( Math.random() * h_range )) + "px";
+	var left  = ( 50+Math.floor( Math.random() * w_range )) + "px";
+
+	console.log("top",top);
+	console.log("left",left);
+
+	ippon.css("left",left).css("top",top);
+
+	// 数値
+	var ipponCount = $('<div>').text( currentIppon ).addClass("ipponCount");
+	ippon.append( ipponCount );
+
+	$('#ipponArea').append( ippon );
+
+	var CSStransforms = anime({
+	  targets: '#ipponArea .el',
+	  scale: 2,
+	 // rotate: '1turn'
+	});
+
+	//
+	playSe( "pon" );
+}
+
+//================================================
+// 貼り付けられたipponが吹っ飛ぶ
+//================================================
+function removeAllIppon(){
+	var CSStransforms = anime({
+	  targets: '#ipponArea .el',
+	  opacity : 0,
+	  scale: 4
+	});
+}
+
+//================================================
+// IPPON!!
+//================================================
+function showIppon(){
+	playSe( "iyopon" );
+	reset();
+
+	setTimeout(function(){
+		// todo
+		// いよぉ〜〜.. ぽん のところで IPPON! を表示
+		appendIpponAnime();
+	},2750);
+
+}
+
+function appendIpponAnime(){
+	var logoImg = document.createElement("img");
+	logoImg.src = "img/ippon_logo.png";
+	logoImg.className = "effectLogo";
+	var wrapper = document.getElementById("wrapper");
+	wrapper.appendChild( logoImg );
+
+	// 1500 .. 750..
+	console.log( logoImg.style );
+	var left = ( window.innerWidth / 2  - 750 ) + "px";
+	var top  = ( window.innerHeight / 2 - 300 ) + "px";
+	logoImg.style.left = left;
+	logoImg.style.top  = top;
+
+	var timeline = anime.timeline();
+	timeline.add({
+		targets: logoImg ,
+	    scale: 0.5,
+	    elasticity: 0,
+	}).add({
+		targets: logoImg ,
+		duration: 1000, 
+	}).add({
+		targets: logoImg ,
+	    opacity: 0,
+	});
+
+	setTimeout(function(){
+		console.log("remove logo");
+		logoImg.remove();
+	},3000);
+}
+
+// appendIpponAnime();
+
+/////////////////////////////////////////////////////////////
+// 音の再生
+/////////////////////////////////////////////////////////////
+function playSe( id ){
+
+	var se = $('#'+id);
+	se[0].currentTime = 0;
+	se[0].play();
+
+	// var audioElem = new Audio();
+ //    audioElem.src = "se/pon.mp3";
+ //    audioElem.play();
+}
+
+</script>
+
+
+</body>
+</html>

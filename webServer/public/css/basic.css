@@ -1,0 +1,54 @@
+/*======================================================
+ 基本設定
+=======================================================*/
+
+html , body {
+    height: 100%;
+}
+
+
+
+/*---- box sizing ----*/
+*, *:before, *:after {
+    -webkit-box-sizing: border-box;
+       -moz-box-sizing: border-box;
+         -o-box-sizing: border-box;
+        -ms-box-sizing: border-box;
+            box-sizing: border-box;
+}
+
+/*======================================================
+ 全体切り分け
+=======================================================*/
+#contents{
+    position: relative;
+    padding-bottom: 52px;
+}
+#footer{
+    position: fixed;
+    bottom: 0;
+    height: 52px;
+    width: 100%;
+}
+#footer img{
+    padding: 4px;
+}
+/*--広告枠--*/
+#ad{
+    height: 50px;
+    width: 100%;
+    /*background-color: gray;*/
+    bottom: 0;
+    margin: 0 auto;
+    position: fixed;
+}
+
+/*-- background --*/
+.mainBg{
+    background-image:url("../img/huji.jpg");
+    background-size:cover;
+    background-position: center center; 
+    background-repeat: no-repeat;
+}
+
+
